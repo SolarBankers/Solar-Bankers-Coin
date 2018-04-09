@@ -2,9 +2,9 @@
 
 ## Links
 
-* [SolarBankers Website](https://solarbankers.com)
-* [SolarBankers Blog](https://solarbankers.com/blog/)
-* [SolarBankers Blockchain Explorer](http://172.104.173.74:8001/app/blocks/1)
+* [Solar Bankers Website](https://solarbankers.com)
+* [Solar Bankers Blog](https://solarbankers.com/blog/)
+* [Solar Bankers Blockchain Explorer](http://172.104.173.74:8001/app/blocks/1)
 
 ## Table of Contents
 
@@ -12,15 +12,15 @@
 
 - [Installation](#installation)
     - [Go 1.9+ Installation and Setup](#go-19-installation-and-setup)
-    - [Go get skycoin](#go-get-skycoin)
-    - [Run Skycoin from the command line](#run-skycoin-from-the-command-line)
-    - [Show Skycoin node options](#show-skycoin-node-options)
-    - [Run Skycoin with options](#run-skycoin-with-options)
+    - [Go get Solar Bankers Coin](#go-get-skycoin)
+    - [Run Solar Bankers Coin from the command line](#run-skycoin-from-the-command-line)
+    - [Show Solar Bankers Coin node options](#show-skycoin-node-options)
+    - [Run Solar Bankers Coin with options](#run-skycoin-with-options)
     - [Docker image](#docker-image)
 - [API Documentation](#api-documentation)
     - [Wallet REST API](#wallet-rest-api)
     - [JSON-RPC 2.0 API](#json-rpc-20-api)
-    - [Skycoin command line interface](#skycoin-command-line-interface)
+    - [Solar Bankers Coin command line interface](#skycoin-command-line-interface)
 - [Contributing a node to the network](#contributing-a-node-to-the-network)
 - [Development](#development)
     - [Modules](#modules)
@@ -40,7 +40,7 @@
 
 [Golang 1.9+ Installation/Setup](./Installation.md)
 
-### Go get skycoin
+### Clone Solar-Banker-Coin
 
 ```sh
 make directory like `$GOPATH/src/github.com/skycoin/skycoin`
@@ -50,21 +50,21 @@ make directory like `$GOPATH/src/github.com/skycoin/skycoin`
 You can clone the repo directly with `git clone https://github.com/SolarBankers/Solar-Bankers-Coin`,
 but it must be cloned to this path: `$GOPATH/src/github.com/skycoin/skycoin`.
 
-### Run Skycoin from the command line
+### Run Solar-Banker-Coin from the command line
 
 ```sh
 cd $GOPATH/src/github.com/skycoin/skycoin
 make run
 ```
 
-### Show Skycoin node options
+### Show Solar-Banker-Coin node options
 
 ```sh
 cd $GOPATH/src/github.com/skycoin/skycoin
 make run-help
 ```
 
-### Run Skycoin with options
+### Run Solar-Banker-Coin with options
 
 ```sh
 cd $GOPATH/src/github.com/skycoin/skycoin
