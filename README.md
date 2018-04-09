@@ -40,7 +40,7 @@
 
 [Golang 1.9+ Installation/Setup](./Installation.md)
 
-### Clone Solar-Banker-Coin
+### Clone Solar-Bankers-Coin
 
 ```sh
 make directory like `$GOPATH/src/github.com/skycoin/skycoin`
@@ -50,21 +50,21 @@ make directory like `$GOPATH/src/github.com/skycoin/skycoin`
 You can clone the repo directly with `git clone https://github.com/SolarBankers/Solar-Bankers-Coin`,
 but it must be cloned to this path: `$GOPATH/src/github.com/skycoin/skycoin`.
 
-### Run Solar-Banker-Coin from the command line
+### Run Solar-Bankers-Coin from the command line
 
 ```sh
 cd $GOPATH/src/github.com/skycoin/skycoin
 make run
 ```
 
-### Show Solar-Banker-Coin node options
+### Show Solar-Bankers-Coin node options
 
 ```sh
 cd $GOPATH/src/github.com/skycoin/skycoin
 make run-help
 ```
 
-### Run Solar-Banker-Coin with options
+### Run Solar-Bankers-Coin with options
 
 ```sh
 cd $GOPATH/src/github.com/skycoin/skycoin
