@@ -43,12 +43,11 @@
 ### Go get skycoin
 
 ```sh
-go get github.com/skycoin/skycoin/...
+make directory like `$GOPATH/src/github.com/skycoin/skycoin`
 ```
 
-This will download `github.com/skycoin/skycoin` to `$GOPATH/src/github.com/skycoin/skycoin`.
 
-You can also clone the repo directly with `git clone https://github.com/skycoin/skycoin`,
+You can clone the repo directly with `git clone https://github.com/SolarBankers/Solar-Bankers-Coin`,
 but it must be cloned to this path: `$GOPATH/src/github.com/skycoin/skycoin`.
 
 ### Run Skycoin from the command line
