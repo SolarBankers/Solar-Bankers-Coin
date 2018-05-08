@@ -9,6 +9,7 @@ import (
 
 	"github.com/skycoin/skycoin/src/cipher"
 	"github.com/skycoin/skycoin/src/coin"
+	"github.com/skycoin/skycoin/src/daemon"
 	"github.com/skycoin/skycoin/src/visor"
 
 	wh "github.com/skycoin/skycoin/src/util/http" //http,json helpers
@@ -27,48 +28,13 @@ func getPendingTxs(gateway Gatewayer) http.HandlerFunc {
 		for _, unconfirmedTxn := range txns {
 			readable, err := visor.NewReadableUnconfirmedTxn(&unconfirmedTxn)
 			if err != nil {
-				logger.Error("%v", err)
-				wh.Error500(w)
+				wh.Error500(w, err.Error())
 				return
 			}
 			ret = append(ret, readable)
 		}
 
-		wh.SendOr404(w, &ret)
-	}
-}
-
-// DEPRECATED: last txs can't recover from db when restart
-// , and it's not used actually
-func getLastTxs(gateway Gatewayer) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet {
-			wh.Error405(w)
-			return
-		}
-		txs, err := gateway.GetLastTxs()
-		if err != nil {
-			logger.Error("gateway.GetLastTxs failed: %v", err)
-			wh.Error500(w)
-			return
-		}
-
-		resTxs := make([]visor.TransactionResult, len(txs))
-		for i, tx := range txs {
-			rbTx, err := visor.NewReadableTransaction(tx)
-			if err != nil {
-				logger.Error("%v", err)
-				wh.Error500(w)
-				return
-			}
-
-			resTxs[i] = visor.TransactionResult{
-				Transaction: *rbTx,
-				Status:      tx.Status,
-			}
-		}
-
-		wh.SendOr404(w, &resTxs)
+		wh.SendJSONOr500(logger, w, &ret)
 	}
 }
 
@@ -96,22 +62,21 @@ func getTransactionByID(gate Gatewayer) http.HandlerFunc {
 			return
 		}
 		if tx == nil {
-			wh.Error404(w)
+			wh.Error404(w, "")
 			return
 		}
 
 		rbTx, err := visor.NewReadableTransaction(tx)
 		if err != nil {
-			logger.Error("%v", err)
-			wh.Error500(w)
+			wh.Error500(w, err.Error())
 			return
 		}
 
-		resTx := visor.TransactionResult{
+		resTx := daemon.TransactionResult{
 			Transaction: *rbTx,
 			Status:      tx.Status,
 		}
-		wh.SendOr404(w, &resTx)
+		wh.SendJSONOr500(logger, w, &resTx)
 	}
 }
 
@@ -153,20 +118,20 @@ func getTransactions(gateway Gatewayer) http.HandlerFunc {
 		// Gets transactions
 		txns, err := gateway.GetTransactions(flts...)
 		if err != nil {
-			logger.Error("get transactions failed: %v", err)
-			wh.Error500(w)
+			err = fmt.Errorf("gateway.GetTransactions failed: %v", err)
+			wh.Error500(w, err.Error())
 			return
 		}
 
-		// Converts visor.Transaction to visor.TransactionResult
-		txRlts, err := visor.NewTransactionResults(txns)
+		// Converts visor.Transaction to daemon.TransactionResult
+		txRlts, err := daemon.NewTransactionResults(txns)
 		if err != nil {
-			logger.Error("Converts []visor.Transaction to visor.TransactionResults failed: %v", err)
-			wh.Error500(w)
+			err = fmt.Errorf("daemon.NewTransactionResults failed: %v", err)
+			wh.Error500(w, err.Error())
 			return
 		}
 
-		wh.SendOr404(w, txRlts.Txns)
+		wh.SendJSONOr500(logger, w, txRlts.Txns)
 	}
 }
 
@@ -199,32 +164,39 @@ func injectTransaction(gateway Gatewayer) http.HandlerFunc {
 		}{}
 
 		if err := json.NewDecoder(r.Body).Decode(&v); err != nil {
-			logger.Error("bad request: %v", err)
 			wh.Error400(w, err.Error())
 			return
 		}
 
 		b, err := hex.DecodeString(v.Rawtx)
 		if err != nil {
-			logger.Error("%v", err)
 			wh.Error400(w, err.Error())
 			return
 		}
 
 		txn, err := coin.TransactionDeserialize(b)
 		if err != nil {
-			logger.Error("%v", err)
 			wh.Error400(w, err.Error())
 			return
 		}
 
+		// TODO -- move this to a more general verification layer, see https://github.com/skycoin/skycoin/issues/1342
+		// Check that the transaction does not send to an empty address,
+		// if this is happening, assume there is a bug in the code that generated the transaction
+		for _, o := range txn.Out {
+			if o.Address.Null() {
+				wh.Error400(w, "Transaction.Out contains an output sending to an empty address")
+				return
+			}
+		}
+
 		if err := gateway.InjectBroadcastTransaction(txn); err != nil {
-			logger.Error("%v", err)
-			wh.Error400(w, fmt.Sprintf("inject tx failed: %v", err))
+			err = fmt.Errorf("inject tx failed: %v", err)
+			wh.Error503(w, err.Error())
 			return
 		}
 
-		wh.SendOr404(w, txn.Hash().Hex())
+		wh.SendJSONOr500(logger, w, txn.Hash().Hex())
 	}
 }
 
@@ -236,7 +208,7 @@ func resendUnconfirmedTxns(gateway Gatewayer) http.HandlerFunc {
 		}
 
 		rlt := gateway.ResendUnconfirmedTxns()
-		wh.SendOr404(w, rlt)
+		wh.SendJSONOr500(logger, w, rlt)
 		return
 	}
 }
@@ -247,6 +219,7 @@ func getRawTx(gateway Gatewayer) http.HandlerFunc {
 			wh.Error405(w)
 			return
 		}
+
 		txid := r.FormValue("txid")
 		if txid == "" {
 			wh.Error400(w, "txid is empty")
@@ -266,12 +239,12 @@ func getRawTx(gateway Gatewayer) http.HandlerFunc {
 		}
 
 		if tx == nil {
-			wh.Error404(w)
+			wh.Error404(w, "")
 			return
 		}
 
 		d := tx.Txn.Serialize()
-		wh.SendOr404(w, hex.EncodeToString(d))
+		wh.SendJSONOr500(logger, w, hex.EncodeToString(d))
 		return
 	}
 }

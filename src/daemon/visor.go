@@ -11,9 +11,7 @@ import (
 	"github.com/skycoin/skycoin/src/coin"
 	"github.com/skycoin/skycoin/src/daemon/gnet"
 	"github.com/skycoin/skycoin/src/daemon/strand"
-	"github.com/skycoin/skycoin/src/util/utc"
 	"github.com/skycoin/skycoin/src/visor"
-	"github.com/skycoin/skycoin/src/wallet"
 )
 
 //TODO
@@ -115,7 +113,7 @@ func (vs *Visor) processRequests(errC <-chan error) error {
 			return err
 		case req := <-vs.reqC:
 			if err := req.Func(); err != nil {
-				logger.Error("Visor request func failed: %v", err)
+				logger.Errorf("Visor request func failed: %v", err)
 			}
 		}
 	}
@@ -172,7 +170,7 @@ func (vs *Visor) RequestBlocks(pool *Pool) error {
 	})
 
 	if err != nil {
-		logger.Debug("Broadcast GetBlocksMessage failed: %v", err)
+		logger.Debugf("Broadcast GetBlocksMessage failed: %v", err)
 	}
 
 	return err
@@ -190,7 +188,7 @@ func (vs *Visor) AnnounceBlocks(pool *Pool) error {
 	})
 
 	if err != nil {
-		logger.Debug("Broadcast AnnounceBlocksMessage failed: %v", err)
+		logger.Debugf("Broadcast AnnounceBlocksMessage failed: %v", err)
 	}
 
 	return err
@@ -220,7 +218,7 @@ func (vs *Visor) AnnounceAllTxns(pool *Pool) error {
 	})
 
 	if err != nil {
-		logger.Debug("Broadcast AnnounceTxnsMessage failed, err:%v", err)
+		logger.Debugf("Broadcast AnnounceTxnsMessage failed, err: %v", err)
 	}
 
 	return err
@@ -242,7 +240,7 @@ func (vs *Visor) AnnounceTxns(pool *Pool, txns []cipher.SHA256) error {
 	})
 
 	if err != nil {
-		logger.Debug("Broadcast AnnounceTxnsMessage failed: %v", err)
+		logger.Debugf("Broadcast AnnounceTxnsMessage failed: %v", err)
 	}
 
 	return err
@@ -297,12 +295,11 @@ func (vs *Visor) RequestBlocksFromAddr(pool *Pool, addr string) error {
 }
 
 // SetTxnsAnnounced sets all txns as announced
-func (vs *Visor) SetTxnsAnnounced(txns []cipher.SHA256) {
+func (vs *Visor) SetTxnsAnnounced(txns map[cipher.SHA256]int64) {
 	vs.strand("SetTxnsAnnounced", func() error {
-		now := utc.Now()
-		for _, h := range txns {
-			if err := vs.v.Unconfirmed.SetAnnounced(h, now); err != nil {
-				logger.Error("Failed to set unconfirmed txn announce time")
+		for h, t := range txns {
+			if err := vs.v.Unconfirmed.SetAnnounced(h, t); err != nil {
+				logger.Error("Failed to set unconfirmed txn announce time: ", err)
 			}
 		}
 
@@ -362,11 +359,11 @@ func (vs *Visor) broadcastTransaction(t coin.Transaction, pool *Pool) error {
 		return err
 	}
 
-	logger.Debug("Broadcasting GiveTxnsMessage to %d conns", l)
+	logger.Debugf("Broadcasting GiveTxnsMessage to %d conns", l)
 
 	err = pool.Pool.BroadcastMessage(m)
 	if err != nil {
-		logger.Error("Broadcast GivenTxnsMessage failed: %v", err)
+		logger.Errorf("Broadcast GivenTxnsMessage failed: %v", err)
 	}
 
 	return err
@@ -451,11 +448,7 @@ func (vs *Visor) RecordBlockchainHeight(addr string, bkLen uint64) {
 func (vs *Visor) EstimateBlockchainHeight() uint64 {
 	var maxLen uint64
 	vs.strand("EstimateBlockchainHeight", func() error {
-		ourLen := vs.v.HeadBkSeq()
-		if len(vs.blockchainHeights) < 2 {
-			maxLen = ourLen
-			return nil
-		}
+		maxLen = vs.v.HeadBkSeq()
 
 		for _, seq := range vs.blockchainHeights {
 			if maxLen < seq {
@@ -466,18 +459,6 @@ func (vs *Visor) EstimateBlockchainHeight() uint64 {
 		return nil
 	})
 	return maxLen
-}
-
-// ScanAheadWalletAddresses loads wallet from seeds and scan ahead N addresses
-func (vs *Visor) ScanAheadWalletAddresses(wltName string, scanN uint64) (wallet.Wallet, error) {
-	var wlt wallet.Wallet
-	var err error
-	vs.strand("ScanAheadWalletAddresses", func() error {
-		wlt, err = vs.v.ScanAheadWalletAddresses(wltName, scanN)
-		return nil
-	})
-
-	return wlt, err
 }
 
 // PeerBlockchainHeight is a peer's IP address with their reported blockchain height
@@ -605,7 +586,7 @@ func (gbm *GetBlocksMessage) Process(d *Daemon) {
 	// Fetch and return signed blocks since LastBlock
 	blocks, err := d.Visor.GetSignedBlocksSince(gbm.LastBlock, gbm.RequestedBlocks)
 	if err != nil {
-		logger.Info("Get signed blocks failed: %v", err)
+		logger.Infof("Get signed blocks failed: %v", err)
 		return
 	}
 
@@ -613,11 +594,11 @@ func (gbm *GetBlocksMessage) Process(d *Daemon) {
 		return
 	}
 
-	logger.Debug("Got %d blocks since %d", len(blocks), gbm.LastBlock)
+	logger.Debugf("Got %d blocks since %d", len(blocks), gbm.LastBlock)
 
 	m := NewGiveBlocksMessage(blocks)
 	if err := d.Pool.Pool.SendMessage(gbm.c.Addr, m); err != nil {
-		logger.Error("Send GiveBlocksMessage to %s failed: %v", gbm.c.Addr, err)
+		logger.Errorf("Send GiveBlocksMessage to %s failed: %v", gbm.c.Addr, err)
 	}
 }
 
@@ -644,7 +625,7 @@ func (gbm *GiveBlocksMessage) Handle(mc *gnet.MessageContext,
 // Process process message
 func (gbm *GiveBlocksMessage) Process(d *Daemon) {
 	if d.Visor.Config.DisableNetworking {
-		logger.Critical("Visor disabled, ignoring GiveBlocksMessage")
+		logger.Critical().Info("Visor disabled, ignoring GiveBlocksMessage")
 		return
 	}
 
@@ -663,10 +644,10 @@ func (gbm *GiveBlocksMessage) Process(d *Daemon) {
 
 		err := d.Visor.ExecuteSignedBlock(b)
 		if err == nil {
-			logger.Critical("Added new block %d", b.Block.Head.BkSeq)
+			logger.Critical().Infof("Added new block %d", b.Block.Head.BkSeq)
 			processed++
 		} else {
-			logger.Critical("Failed to execute received block %d: %v", b.Block.Head.BkSeq, err)
+			logger.Critical().Errorf("Failed to execute received block %d: %v", b.Block.Head.BkSeq, err)
 			// Blocks must be received in order, so if one fails its assumed
 			// the rest are failing
 			break
@@ -721,7 +702,7 @@ func (abm *AnnounceBlocksMessage) Process(d *Daemon) {
 	// If client is not caught up, won't attempt to get block
 	m := NewGetBlocksMessage(headBkSeq, d.Visor.Config.BlocksResponseCount)
 	if err := d.Pool.Pool.SendMessage(abm.c.Addr, m); err != nil {
-		logger.Error("Send GetBlocksMessage to %s failed: %v", abm.c.Addr, err)
+		logger.Errorf("Send GetBlocksMessage to %s failed: %v", abm.c.Addr, err)
 	}
 }
 
@@ -768,7 +749,7 @@ func (atm *AnnounceTxnsMessage) Process(d *Daemon) {
 
 	m := NewGetTxnsMessage(unknown)
 	if err := d.Pool.Pool.SendMessage(atm.c.Addr, m); err != nil {
-		logger.Error("Send GetTxnsMessage to %s failed: %v", atm.c.Addr, err)
+		logger.Errorf("Send GetTxnsMessage to %s failed: %v", atm.c.Addr, err)
 	}
 }
 
@@ -806,7 +787,7 @@ func (gtm *GetTxnsMessage) Process(d *Daemon) {
 	// Reply to sender with GiveTxnsMessage
 	m := NewGiveTxnsMessage(known)
 	if err := d.Pool.Pool.SendMessage(gtm.c.Addr, m); err != nil {
-		logger.Error("Send GiveTxnsMessage to %s failed: %v", gtm.c.Addr, err)
+		logger.Errorf("Send GiveTxnsMessage to %s failed: %v", gtm.c.Addr, err)
 	}
 }
 
@@ -847,13 +828,13 @@ func (gtm *GiveTxnsMessage) Process(d *Daemon) {
 		// Only announce transactions that are new to us, so that peers can't spam relays
 		known, softErr, err := d.Visor.InjectTransaction(txn)
 		if err != nil {
-			logger.Warning("Failed to record transaction %s: %v", txn.Hash().Hex(), err)
+			logger.Warningf("Failed to record transaction %s: %v", txn.Hash().Hex(), err)
 			continue
 		} else if softErr != nil {
-			logger.Warning("Transaction soft violation: %v", err)
+			logger.Warningf("Transaction soft violation: %v", err)
 			continue
 		} else if known {
-			logger.Warning("Duplicate Transaction: %s", txn.Hash().Hex())
+			logger.Warningf("Duplicate Transaction: %s", txn.Hash().Hex())
 			continue
 		}
 

@@ -3,11 +3,11 @@
     "productName": "SolarBankers Coin",
     "author": "SolarBankers",
     "main": "src/electron-main.js",
-    "version": "0.21.1",
-    "description": "SolarBankers Coin wallet",
+    "version": "0.23.1-rc2",
+    "description": "solarbankerscoin wallet",
     "license": "MIT",
     "build": {
-        "appId": "org.skycoin.skycoin",
+        "appId": "org.solarbankers.solarbankers",
         "nsis": {
             "oneClick": false,
             "allowToChangeInstallationDirectory": true
@@ -27,6 +27,10 @@
                 {
                     "from": ".gox_output/${os}_${arch}",
                     "to": "./resources/app"
+                },
+                {
+                    "from": "data.db",
+                    "to": "./"
                 }
             ]
         },

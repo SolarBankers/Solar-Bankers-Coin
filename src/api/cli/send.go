@@ -4,8 +4,6 @@ import (
 	"fmt"
 
 	gcli "github.com/urfave/cli"
-
-	"github.com/skycoin/skycoin/src/api/webrpc"
 )
 
 func sendCmd() gcli.Command {
@@ -39,10 +37,10 @@ func sendCmd() gcli.Command {
 				Usage: `[changeAddress] Specify change address, by default the from address or
 				the wallet's coinbase address will be used`,
 			},
-			// gcli.StringFlag{
-			// 	Name:  "p",
-			// 	Usage: "[password] Password for address or wallet.",
-			// },
+			gcli.StringFlag{
+				Name:  "p",
+				Usage: "[password] Wallet password",
+			},
 			gcli.StringFlag{
 				Name: "m",
 				Usage: `[send to many] use JSON string to set multiple recive addresses and coins,
@@ -55,7 +53,7 @@ func sendCmd() gcli.Command {
 		},
 		OnUsageError: onCommandUsageError(name),
 		Action: func(c *gcli.Context) error {
-			rpcClient := RpcClientFromContext(c)
+			rpcClient := RPCClientFromContext(c)
 
 			rawtx, err := createRawTxCmdHandler(c)
 			if err != nil {
@@ -70,7 +68,7 @@ func sendCmd() gcli.Command {
 
 			jsonFmt := c.Bool("json")
 			if jsonFmt {
-				return printJson(struct {
+				return printJSON(struct {
 					Txid string `json:"txid"`
 				}{
 					Txid: txid,
@@ -81,25 +79,4 @@ func sendCmd() gcli.Command {
 			return nil
 		},
 	}
-	// Commands = append(Commands, cmd)
-}
-
-// SendFromWallet sends from any address or combination of addresses from a wallet. Returns txid.
-func SendFromWallet(c *webrpc.Client, walletFile, chgAddr string, toAddrs []SendAmount) (string, error) {
-	rawTx, err := CreateRawTxFromWallet(c, walletFile, chgAddr, toAddrs)
-	if err != nil {
-		return "", err
-	}
-
-	return c.InjectTransaction(rawTx)
-}
-
-// SendFromAddress sends from a specific address in a wallet. Returns txid.
-func SendFromAddress(c *webrpc.Client, addr, walletFile, chgAddr string, toAddrs []SendAmount) (string, error) {
-	rawTx, err := CreateRawTxFromAddress(c, addr, walletFile, chgAddr, toAddrs)
-	if err != nil {
-		return "", err
-	}
-
-	return c.InjectTransaction(rawTx)
 }

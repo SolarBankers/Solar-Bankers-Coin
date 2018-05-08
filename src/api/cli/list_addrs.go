@@ -31,12 +31,12 @@ func listAddresses(c *gcli.Context) error {
 
 	wlt, err := wallet.Load(w)
 	if err != nil {
-		return WalletLoadError(err)
+		return WalletLoadError{err}
 	}
 
 	addrs := wlt.GetAddresses()
 
-	s, err := FormatAddressesAsJson(addrs)
+	s, err := FormatAddressesAsJSON(addrs)
 	if err != nil {
 		return err
 	}

@@ -258,9 +258,9 @@ func NewUnconfirmedTxnPool(db *bolt.DB) *UnconfirmedTxnPool {
 }
 
 // SetAnnounced updates announced time of specific tx
-func (utp *UnconfirmedTxnPool) SetAnnounced(h cipher.SHA256, t time.Time) error {
+func (utp *UnconfirmedTxnPool) SetAnnounced(h cipher.SHA256, t int64) error {
 	return utp.txns.update(h, func(tx *UnconfirmedTxn) {
-		tx.Announced = t.UnixNano()
+		tx.Announced = t
 	})
 }
 
@@ -284,7 +284,7 @@ func (utp *UnconfirmedTxnPool) InjectTransaction(bc Blockchainer, t coin.Transac
 	var isValid int8 = 1
 	var softErr *ErrTxnViolatesSoftConstraint
 	if err := bc.VerifySingleTxnAllConstraints(t, maxSize); err != nil {
-		logger.Warning("bc.VerifySingleTxnAllConstraints failed for txn %s: %v", t.TxIDHex(), err)
+		logger.Warningf("bc.VerifySingleTxnAllConstraints failed for txn %s: %v", t.TxIDHex(), err)
 		switch err.(type) {
 		case ErrTxnViolatesSoftConstraint:
 			e := err.(ErrTxnViolatesSoftConstraint)
@@ -575,7 +575,7 @@ func (utp *UnconfirmedTxnPool) GetTxns(filter func(tx UnconfirmedTxn) bool) (txn
 		}
 		return nil
 	}); err != nil {
-		logger.Debug("GetTxns error:%v", err)
+		logger.Debugf("GetTxns error:%v", err)
 	}
 	return
 }
@@ -588,7 +588,7 @@ func (utp *UnconfirmedTxnPool) GetTxHashes(filter func(tx UnconfirmedTxn) bool) 
 		}
 		return nil
 	}); err != nil {
-		logger.Debug("GetTxHashes error:%v", err)
+		logger.Debugf("GetTxHashes error:%v", err)
 	}
 	return
 }

@@ -1,6 +1,6 @@
 'use strict'
 
-const { app, Menu, BrowserWindow, dialog } = require('electron');
+const { app, Menu, BrowserWindow, dialog, shell, session } = require('electron');
 
 var log = require('electron-log');
 
@@ -9,6 +9,8 @@ const path = require('path');
 const childProcess = require('child_process');
 
 const cwd = require('process').cwd();
+
+const axios = require('axios');
 
 // This adds refresh and devtools console keybindings
 // Page can refresh with cmd+r, ctrl+r, F5
@@ -19,7 +21,7 @@ require('electron-context-menu')({});
 
 global.eval = function() { throw new Error('bad!!'); }
 
-const defaultURL = 'http://127.0.0.1:6420/';
+const defaultURL = 'http://127.0.0.1:7220/';
 let currentURL;
 
 // Force everything localhost, in case of a leak
@@ -37,10 +39,10 @@ let win;
 var skycoin = null;
 
 function startSkycoin() {
-  console.log('Starting skycoin from electron');
+  console.log('Starting SolarBankerCoin from electron');
 
   if (skycoin) {
-    console.log('Skycoin already running');
+    console.log('SolarBankerCoin already running');
     app.emit('skycoin-ready');
     return
   }
@@ -52,26 +54,30 @@ function startSkycoin() {
   // Resolve skycoin binary location
   var appPath = app.getPath('exe');
   var exe = (() => {
-        switch (process.platform) {
-  case 'darwin':
-    return path.join(appPath, '../../Resources/app/solarbankerscoin');
-  case 'win32':
-    // Use only the relative path on windows due to short path length
-    // limits
-    return './resources/app/solarbankerscoin.exe';
-  case 'linux':
-    return path.join(path.dirname(appPath), './resources/app/solarbankerscoin');
-  default:
-    return './resources/app/solarbankerscoin';
-  }
-})()
+    switch (process.platform) {
+      case 'darwin':
+        return path.join(appPath, '../../Resources/app/solarbankerscoin');
+      case 'win32':
+        // Use only the relative path on windows due to short path length
+        // limits
+        return './resources/app/solarbankerscoin.exe';
+      case 'linux':
+        return path.join(path.dirname(appPath), './resources/app/solarbankerscoin');
+      default:
+        return './resources/app/solarbankerscoin';
+    }
+  })()
 
   var args = [
     '-launch-browser=false',
     '-gui-dir=' + path.dirname(exe),
-    '-color-log=false', // must be disabled or web interface detection
+    '-color-log=false', // must be disabled for web interface detection
     '-logtofile=true',
-    '-download-peerlist=true'
+    '-download-peerlist=true',
+    '-enable-seed-api=true',
+    '-enable-wallet-api=true',
+    '-rpc-interface=false',
+    "-disable-csrf=false"
     // will break
     // broken (automatically generated certs do not work):
     // '-web-interface-https=true',
@@ -79,49 +85,40 @@ function startSkycoin() {
   skycoin = childProcess.spawn(exe, args);
 
   skycoin.on('error', (e) => {
-    dialog.showErrorBox('Failed to start skycoin', e.toString());
-  app.quit();
-});
+    dialog.showErrorBox('Failed to start solarbankerscoin', e.toString());
+    app.quit();
+  });
 
   skycoin.stdout.on('data', (data) => {
     console.log(data.toString());
-
-  // Scan for the web URL string
-  if (currentURL) {
-    return
-  }
-  const marker = 'Starting web interface on ';
-  var i = data.indexOf(marker);
-  if (i === -1) {
-    return
-  }
-  // var j = data.indexOf('\n', i);
-
-  // // dialog.showErrorBox('index of newline: ', j);
-  // if (j === -1) {
-  //     throw new Error('web interface url log line incomplete');
-  // }
-  // var url = data.slice(i + marker.length, j);
-  // currentURL = url.toString();
-  currentURL = defaultURL;
-  app.emit('skycoin-ready', { url: currentURL });
-});
+    // Scan for the web URL string
+    if (currentURL) {
+      return
+    }
+    const marker = 'Starting web interface on ';
+    var i = data.indexOf(marker);
+    if (i === -1) {
+      return
+    }
+    currentURL = defaultURL;
+    app.emit('skycoin-ready', { url: currentURL });
+  });
 
   skycoin.stderr.on('data', (data) => {
     console.log(data.toString());
-});
+  });
 
   skycoin.on('close', (code) => {
     // log.info('Skycoin closed');
-    console.log('Skycoin closed');
-  reset();
-});
+    console.log('SolarBankerscoin closed');
+    reset();
+  });
 
   skycoin.on('exit', (code) => {
     // log.info('Skycoin exited');
-    console.log('Skycoin exited');
-  reset();
-});
+    console.log('SolarBankerscoin exited');
+    reset();
+  });
 }
 
 function createWindow(url) {
@@ -142,24 +139,26 @@ function createWindow(url) {
   win = new BrowserWindow({
     width: 1200,
     height: 900,
-    title: 'SolarBankers Coin',
+    title: 'Skycoin',
     icon: iconPath,
     nodeIntegration: false,
     webPreferences: {
       webgl: false,
       webaudio: false,
+      contextIsolation: true,
     },
   });
 
   // patch out eval
   win.eval = global.eval;
+  win.webContents.executeJavaScript('window.eval = 0;');
 
   const ses = win.webContents.session
   ses.clearCache(function () {
-    console.log('Cleared the caching of the skycoin wallet.');
+    console.log('Cleared the caching of the SolarBankerscoin wallet.');
   });
 
-  ses.clearStorageData([],function(){
+  ses.clearStorageData([], function() {
     console.log('Cleared the stored cached data');
   });
 
@@ -174,49 +173,81 @@ function createWindow(url) {
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.
     win = null;
-});
+  });
+
+  win.webContents.on('will-navigate', function(e, url) {
+    e.preventDefault();
+    require('electron').shell.openExternal(url);
+  });
 
   // create application's main menu
   var template = [{
-    label: "SolarBankers Coin",
+    label: 'SolarBankersCoin',
     submenu: [
-      { label: "About SolarBankers", selector: "orderFrontStandardAboutPanel:" },
-      { type: "separator" },
-      { label: "Quit", accelerator: "Command+Q", click: function() { app.quit(); } }
+      { label: 'Quit', accelerator: 'Command+Q', click: function() { app.quit(); } }
     ]
   }, {
-    label: "Edit",
+    label: 'Edit',
     submenu: [
-      { label: "Undo", accelerator: "CmdOrCtrl+Z", selector: "undo:" },
-      { label: "Redo", accelerator: "Shift+CmdOrCtrl+Z", selector: "redo:" },
-      { type: "separator" },
-      { label: "Cut", accelerator: "CmdOrCtrl+X", selector: "cut:" },
-      { label: "Copy", accelerator: "CmdOrCtrl+C", selector: "copy:" },
-      { label: "Paste", accelerator: "CmdOrCtrl+V", selector: "paste:" },
-      { label: "Select All", accelerator: "CmdOrCtrl+A", selector: "selectAll:" }
+      { label: 'Undo', accelerator: 'CmdOrCtrl+Z', selector: 'undo:' },
+      { label: 'Redo', accelerator: 'Shift+CmdOrCtrl+Z', selector: 'redo:' },
+      { type: 'separator' },
+      { label: 'Cut', accelerator: 'CmdOrCtrl+X', selector: 'cut:' },
+      { label: 'Copy', accelerator: 'CmdOrCtrl+C', selector: 'copy:' },
+      { label: 'Paste', accelerator: 'CmdOrCtrl+V', selector: 'paste:' },
+      { label: 'Select All', accelerator: 'CmdOrCtrl+A', selector: 'selectAll:' }
+    ]
+  }, {
+    label: 'Show',
+    submenu: [
+      {
+        label: 'Wallets folder',
+        click: () => shell.showItemInFolder(walletsFolder),
+      },
+      {
+        label: 'Logs folder',
+        click: () => shell.showItemInFolder(walletsFolder.replace('wallets', 'logs')),
+      },
+      {
+        label: 'DevTools',
+        accelerator: process.platform === 'darwin' ? 'Alt+Command+I' : 'Ctrl+Shift+I',
+        click: (item, focusedWindow) => {
+          if (focusedWindow) {
+            focusedWindow.toggleDevTools();
+          }
+        }
+      },
     ]
   }];
 
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+
+  session
+    .fromPartition('')
+    .setPermissionRequestHandler((webContents, permission, callback) => {
+      return callback(false);
+    });
 }
 
 // Enforce single instance
 const alreadyRunning = app.makeSingleInstance((commandLine, workingDirectory) => {
-      // Someone tried to run a second instance, we should focus our window.
-      if (win) {
-        if (win.isMinimized()) {
-          win.restore();
-        }
-        win.focus();
-      } else {
-        createWindow(currentURL || defaultURL);
-}
+  // Someone tried to run a second instance, we should focus our window.
+  if (win) {
+    if (win.isMinimized()) {
+      win.restore();
+    }
+    win.focus();
+  } else {
+    createWindow(currentURL || defaultURL);
+  }
 });
 
 if (alreadyRunning) {
   app.quit();
   return;
 }
+
+let walletsFolder = null;
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
@@ -225,6 +256,11 @@ app.on('ready', startSkycoin);
 
 app.on('skycoin-ready', (e) => {
   createWindow(e.url);
+
+  axios
+    .get(defaultURL + 'wallets/folderName')
+    .then(response => walletsFolder = response.data.address)
+    .catch(() => {});
 });
 
 // Quit when all windows are closed.
@@ -232,16 +268,16 @@ app.on('window-all-closed', () => {
   // On OS X it is common for applications and their menu bar
   // to stay active until the user quits explicitly with Cmd + Q
   if (process.platform !== 'darwin') {
-  app.quit();
-}
+    app.quit();
+  }
 });
 
 app.on('activate', () => {
   // On OS X it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   if (win === null) {
-  createWindow();
-}
+    createWindow();
+  }
 });
 
 app.on('will-quit', () => {
@@ -250,5 +286,18 @@ app.on('will-quit', () => {
   }
 });
 
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and require them here.
+app.on('web-contents-created', (event, contents) => {
+  contents.on('will-attach-webview', (event, webPreferences, params) => {
+    // Strip away preload scripts if unused or verify their location is legitimate
+    delete webPreferences.preload
+    delete webPreferences.preloadURL
+
+    // Disable Node.js integration
+    webPreferences.nodeIntegration = false
+
+    // Verify URL being loaded
+    if (!params.src.startsWith(url)) {
+      event.preventDefault();
+    }
+  });
+});

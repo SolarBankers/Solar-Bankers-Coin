@@ -5,7 +5,7 @@
       <label for="wallet">Send from</label>
       <select formControlName="wallet" id="wallet">
         <option *ngFor="let wallet of walletService.all() | async" [disabled]="wallet.balance <= 0" [ngValue]="wallet">
-          {{ wallet.label }} - {{ wallet.coins }} SLB
+          {{ wallet.label }} - {{ wallet.coins | number:'1.0-6' }} SLB
         </option>
       </select>
     </div>
@@ -15,7 +15,7 @@
     </div>
     <div class="form-field">
       <label for="amount">Amount</label>
-      <input formControlName="amount" id="amount">
+      <input formControlName="amount" id="amount" (keydown.enter)="send()">
     </div>
     <div class="form-field">
       <label for="notes">Notes</label>

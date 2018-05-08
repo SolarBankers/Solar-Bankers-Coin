@@ -95,7 +95,7 @@ func makeSuccessCoinSupplyResult(t *testing.T, allUnspents visor.ReadableOutputS
 func TestGetTransactionsForAddress(t *testing.T) {
 	address := testutil.MakeAddress()
 	successAddress := "111111111111111111111691FSP"
-	invalidHash := "caicb"
+	invalidHash := "cafcb"
 	validHash := "79216473e8f2c17095c6887cc9edca6c023afedfac2e0c5460e8b6f359684f8b"
 	tt := []struct {
 		name                        string
@@ -103,7 +103,7 @@ func TestGetTransactionsForAddress(t *testing.T) {
 		status                      int
 		err                         string
 		addressParam                string
-		gatewayGetAddressTxnsResult *visor.TransactionResults
+		gatewayGetAddressTxnsResult *daemon.TransactionResults
 		gatewayGetAddressTxnsErr    error
 		gatewayGetUxOutByIDArg      cipher.SHA256
 		gatewayGetUxOutByIDResult   *historydb.UxOut
@@ -136,7 +136,7 @@ func TestGetTransactionsForAddress(t *testing.T) {
 			name:                     "500 - gw GetAddressTxns error",
 			method:                   http.MethodGet,
 			status:                   http.StatusInternalServerError,
-			err:                      "500 Internal Server Error",
+			err:                      "500 Internal Server Error - gateway.GetAddressTxns failed: gatewayGetAddressTxnsErr",
 			addressParam:             address.String(),
 			gatewayGetAddressTxnsErr: errors.New("gatewayGetAddressTxnsErr"),
 		},
@@ -144,10 +144,10 @@ func TestGetTransactionsForAddress(t *testing.T) {
 			name:         "500 - cipher.SHA256FromHex(tx.Transaction.In) error",
 			method:       http.MethodGet,
 			status:       http.StatusInternalServerError,
-			err:          "500 Internal Server Error",
+			err:          "500 Internal Server Error - encoding/hex: odd length hex string",
 			addressParam: address.String(),
-			gatewayGetAddressTxnsResult: &visor.TransactionResults{
-				Txns: []visor.TransactionResult{
+			gatewayGetAddressTxnsResult: &daemon.TransactionResults{
+				Txns: []daemon.TransactionResult{
 					{
 						Transaction: visor.ReadableTransaction{
 							In: []string{
@@ -162,10 +162,10 @@ func TestGetTransactionsForAddress(t *testing.T) {
 			name:         "500 - GetUxOutByID error",
 			method:       http.MethodGet,
 			status:       http.StatusInternalServerError,
-			err:          "500 Internal Server Error",
+			err:          "500 Internal Server Error - gatewayGetUxOutByIDErr",
 			addressParam: address.String(),
-			gatewayGetAddressTxnsResult: &visor.TransactionResults{
-				Txns: []visor.TransactionResult{
+			gatewayGetAddressTxnsResult: &daemon.TransactionResults{
+				Txns: []daemon.TransactionResult{
 					{
 						Transaction: visor.ReadableTransaction{
 							In: []string{
@@ -182,10 +182,10 @@ func TestGetTransactionsForAddress(t *testing.T) {
 			name:         "500 - GetUxOutByID nil result",
 			method:       http.MethodGet,
 			status:       http.StatusInternalServerError,
-			err:          "500 Internal Server Error",
+			err:          "500 Internal Server Error - uxout of 79216473e8f2c17095c6887cc9edca6c023afedfac2e0c5460e8b6f359684f8b does not exist in history db",
 			addressParam: address.String(),
-			gatewayGetAddressTxnsResult: &visor.TransactionResults{
-				Txns: []visor.TransactionResult{
+			gatewayGetAddressTxnsResult: &daemon.TransactionResults{
+				Txns: []daemon.TransactionResult{
 					{
 						Transaction: visor.ReadableTransaction{
 							In: []string{
@@ -202,8 +202,8 @@ func TestGetTransactionsForAddress(t *testing.T) {
 			method:       http.MethodGet,
 			status:       http.StatusOK,
 			addressParam: address.String(),
-			gatewayGetAddressTxnsResult: &visor.TransactionResults{
-				Txns: []visor.TransactionResult{
+			gatewayGetAddressTxnsResult: &daemon.TransactionResults{
+				Txns: []daemon.TransactionResult{
 					{
 						Transaction: visor.ReadableTransaction{
 							In: []string{
@@ -222,7 +222,7 @@ func TestGetTransactionsForAddress(t *testing.T) {
 							Hash:    validHash,
 							Address: successAddress,
 							Coins:   "0.000000",
-							Hours:   "0",
+							Hours:   0,
 						},
 					},
 				},
@@ -257,7 +257,7 @@ func TestGetTransactionsForAddress(t *testing.T) {
 			} else {
 				setCSRFParameters(csrfStore, tokenInvalid, req)
 			}
-			handler := NewServerMux(configuredHost, ".", gateway, csrfStore)
+			handler := newServerMux(muxConfig{host: configuredHost, appLoc: "."}, gateway, csrfStore, nil)
 			handler.ServeHTTP(rr, req)
 
 			status := rr.Code
@@ -311,7 +311,7 @@ func TestCoinSupply(t *testing.T) {
 			name:   "500 - gatewayGetUnspentOutputsErr",
 			method: http.MethodGet,
 			status: http.StatusInternalServerError,
-			err:    "500 Internal Server Error",
+			err:    "500 Internal Server Error - gateway.GetUnspentOutputs failed: gatewayGetUnspentOutputsErr",
 			gatewayGetUnspentOutputsArg: filterInUnlocked,
 			gatewayGetUnspentOutputsErr: errors.New("gatewayGetUnspentOutputsErr"),
 		},
@@ -319,7 +319,7 @@ func TestCoinSupply(t *testing.T) {
 			name:   "500 - gatewayGetUnspentOutputsErr",
 			method: http.MethodGet,
 			status: http.StatusInternalServerError,
-			err:    "500 Internal Server Error",
+			err:    "500 Internal Server Error - gateway.GetUnspentOutputs failed: gatewayGetUnspentOutputsErr",
 			gatewayGetUnspentOutputsArg: filterInUnlocked,
 			gatewayGetUnspentOutputsErr: errors.New("gatewayGetUnspentOutputsErr"),
 		},
@@ -327,7 +327,7 @@ func TestCoinSupply(t *testing.T) {
 			name:   "500 - too large HeadOutputs item",
 			method: http.MethodGet,
 			status: http.StatusInternalServerError,
-			err:    "500 Internal Server Error",
+			err:    "500 Internal Server Error - Invalid unlocked output balance string 9223372036854775807: Droplet string conversion failed: Value is too large",
 			gatewayGetUnspentOutputsArg: filterInUnlocked,
 			gatewayGetUnspentOutputsResult: &visor.ReadableOutputSet{
 				HeadOutputs: visor.ReadableOutputs{
@@ -379,7 +379,7 @@ func TestCoinSupply(t *testing.T) {
 			} else {
 				setCSRFParameters(csrfStore, tokenInvalid, req)
 			}
-			handler := NewServerMux(configuredHost, ".", gateway, csrfStore)
+			handler := newServerMux(muxConfig{host: configuredHost, appLoc: "."}, gateway, csrfStore, nil)
 			handler.ServeHTTP(rr, req)
 
 			status := rr.Code
@@ -412,7 +412,7 @@ func TestGetRichlist(t *testing.T) {
 		includeDistribution      bool
 		gatewayGetRichlistResult visor.Richlist
 		gatewayGetRichlistErr    error
-		result                   visor.Richlist
+		result                   Richlist
 		csrfDisabled             bool
 	}{
 		{
@@ -444,7 +444,7 @@ func TestGetRichlist(t *testing.T) {
 			name:   "500 - gw GetRichlist error",
 			method: http.MethodGet,
 			status: http.StatusInternalServerError,
-			err:    "500 Internal Server Error",
+			err:    "500 Internal Server Error - gatewayGetRichlistErr",
 			httpParams: &httpParams{
 				topn:                "1",
 				includeDistribution: "false",
@@ -456,8 +456,119 @@ func TestGetRichlist(t *testing.T) {
 			method: http.MethodGet,
 			status: http.StatusOK,
 			httpParams: &httpParams{
-				topn:                "1",
+				topn:                "3",
 				includeDistribution: "false",
+			},
+			gatewayGetRichlistResult: visor.Richlist{
+				{
+					Address: "2fGC7kwAM9yZyEF1QqBqp8uo9RUsF6ENGJF",
+					Coins:   "1000000.000000",
+					Locked:  false,
+				},
+				{
+					Address: "27jg25DZX21MXMypVbKJMmgCJ5SPuEunMF1",
+					Coins:   "500000.000000",
+					Locked:  false,
+				},
+				{
+					Address: "2fGi2jhvp6ppHg3DecguZgzqvpJj2Gd4KHW",
+					Coins:   "500000.000000",
+					Locked:  false,
+				},
+				{
+					Address: "2TmvdBWJgxMwGs84R4drS9p5fYkva4dGdfs",
+					Coins:   "244458.000000",
+					Locked:  false,
+				},
+				{
+					Address: "24gvUHXHtSg5drKiFsMw7iMgoN2PbLub53C",
+					Coins:   "195503.000000",
+					Locked:  false,
+				},
+			},
+			result: Richlist{
+				Richlist: visor.Richlist{
+					{
+						Address: "2fGC7kwAM9yZyEF1QqBqp8uo9RUsF6ENGJF",
+						Coins:   "1000000.000000",
+						Locked:  false,
+					},
+					{
+						Address: "27jg25DZX21MXMypVbKJMmgCJ5SPuEunMF1",
+						Coins:   "500000.000000",
+						Locked:  false,
+					},
+					{
+						Address: "2fGi2jhvp6ppHg3DecguZgzqvpJj2Gd4KHW",
+						Coins:   "500000.000000",
+						Locked:  false,
+					},
+				},
+			},
+		},
+		{
+			name:   "200 no limit",
+			method: http.MethodGet,
+			status: http.StatusOK,
+			httpParams: &httpParams{
+				topn:                "0",
+				includeDistribution: "false",
+			},
+			gatewayGetRichlistResult: visor.Richlist{
+				{
+					Address: "2fGC7kwAM9yZyEF1QqBqp8uo9RUsF6ENGJF",
+					Coins:   "1000000.000000",
+					Locked:  false,
+				},
+				{
+					Address: "27jg25DZX21MXMypVbKJMmgCJ5SPuEunMF1",
+					Coins:   "500000.000000",
+					Locked:  false,
+				},
+				{
+					Address: "2fGi2jhvp6ppHg3DecguZgzqvpJj2Gd4KHW",
+					Coins:   "500000.000000",
+					Locked:  false,
+				},
+				{
+					Address: "2TmvdBWJgxMwGs84R4drS9p5fYkva4dGdfs",
+					Coins:   "244458.000000",
+					Locked:  false,
+				},
+				{
+					Address: "24gvUHXHtSg5drKiFsMw7iMgoN2PbLub53C",
+					Coins:   "195503.000000",
+					Locked:  false,
+				},
+			},
+			result: Richlist{
+				Richlist: visor.Richlist{
+					{
+						Address: "2fGC7kwAM9yZyEF1QqBqp8uo9RUsF6ENGJF",
+						Coins:   "1000000.000000",
+						Locked:  false,
+					},
+					{
+						Address: "27jg25DZX21MXMypVbKJMmgCJ5SPuEunMF1",
+						Coins:   "500000.000000",
+						Locked:  false,
+					},
+					{
+						Address: "2fGi2jhvp6ppHg3DecguZgzqvpJj2Gd4KHW",
+						Coins:   "500000.000000",
+						Locked:  false,
+					},
+					{
+						Address: "2TmvdBWJgxMwGs84R4drS9p5fYkva4dGdfs",
+						Coins:   "244458.000000",
+						Locked:  false,
+					},
+					{
+						Address: "24gvUHXHtSg5drKiFsMw7iMgoN2PbLub53C",
+						Coins:   "195503.000000",
+						Locked:  false,
+					},
+				},
 			},
 		},
 	}
@@ -493,7 +604,7 @@ func TestGetRichlist(t *testing.T) {
 			} else {
 				setCSRFParameters(csrfStore, tokenInvalid, req)
 			}
-			handler := NewServerMux(configuredHost, ".", gateway, csrfStore)
+			handler := newServerMux(muxConfig{host: configuredHost, appLoc: "."}, gateway, csrfStore, nil)
 			handler.ServeHTTP(rr, req)
 
 			status := rr.Code
@@ -503,7 +614,7 @@ func TestGetRichlist(t *testing.T) {
 				require.Equal(t, tc.err, strings.TrimSpace(rr.Body.String()), "case: %s, handler returned wrong error message: got `%v`| %s, want `%v`",
 					tc.name, strings.TrimSpace(rr.Body.String()), status, tc.err)
 			} else {
-				var msg visor.Richlist
+				var msg Richlist
 				err = json.Unmarshal(rr.Body.Bytes(), &msg)
 				require.NoError(t, err)
 				require.Equal(t, tc.result, msg)
@@ -536,7 +647,7 @@ func TestGetAddressCount(t *testing.T) {
 			name:   "500 - gw GetAddressCount error",
 			method: http.MethodGet,
 			status: http.StatusInternalServerError,
-			err:    "500 Internal Server Error",
+			err:    "500 Internal Server Error - gatewayGetAddressCountErr",
 			gatewayGetAddressCountErr: errors.New("gatewayGetAddressCountErr"),
 		},
 		{
@@ -568,7 +679,7 @@ func TestGetAddressCount(t *testing.T) {
 			} else {
 				setCSRFParameters(csrfStore, tokenInvalid, req)
 			}
-			handler := NewServerMux(configuredHost, ".", gateway, csrfStore)
+			handler := newServerMux(muxConfig{host: configuredHost, appLoc: "."}, gateway, csrfStore, nil)
 			handler.ServeHTTP(rr, req)
 
 			status := rr.Code

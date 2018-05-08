@@ -15,13 +15,20 @@ import (
 
 func blockchainHandler(gateway Gatewayer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		wh.SendOr404(w, gateway.GetBlockchainMetadata())
+		metadata, err := gateway.GetBlockchainMetadata()
+		if err != nil {
+			err = fmt.Errorf("gateway.GetBlockchainMetadata failed: %v", err)
+			wh.Error500(w, err.Error())
+			return
+		}
+
+		wh.SendJSONOr500(logger, w, metadata)
 	}
 }
 
 func blockchainProgressHandler(gateway Gatewayer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		wh.SendOr404(w, gateway.GetBlockchainProgress())
+		wh.SendJSONOr500(logger, w, gateway.GetBlockchainProgress())
 	}
 }
 
@@ -66,18 +73,17 @@ func getBlock(gate Gatewayer) http.HandlerFunc {
 		}
 
 		if !exist {
-			wh.SendOr404(w, nil)
+			wh.Error404(w, "")
 			return
 		}
 
 		rb, err := visor.NewReadableBlock(&b.Block)
 		if err != nil {
-			logger.Error("%v", err)
-			wh.Error500(w)
+			wh.Error500(w, err.Error())
 			return
 		}
 
-		wh.SendOr404(w, rb)
+		wh.SendJSONOr500(logger, w, rb)
 	}
 }
 
@@ -105,7 +111,7 @@ func getBlocks(gateway Gatewayer) http.HandlerFunc {
 			wh.Error400(w, fmt.Sprintf("Get blocks failed: %v", err))
 			return
 		}
-		wh.SendOr404(w, rb)
+		wh.SendJSONOr500(logger, w, rb)
 	}
 }
 
@@ -135,6 +141,6 @@ func getLastBlocks(gateway Gatewayer) http.HandlerFunc {
 			return
 		}
 
-		wh.SendOr404(w, rb)
+		wh.SendJSONOr500(logger, w, rb)
 	}
 }
