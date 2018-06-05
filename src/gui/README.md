@@ -81,7 +81,7 @@ Method: GET
 Example:
 
 ```sh
-curl http://127.0.0.1:6420/csrf
+curl http://127.0.0.1:7220/csrf
 ```
 
 Result:
@@ -104,7 +104,7 @@ Method: GET
 Example:
 
 ```sh
-curl http://127.0.0.1:6420/health
+curl http://127.0.0.1:7220/health
 ```
 
 Response:
@@ -147,7 +147,7 @@ Method: GET
 Example:
 
 ```sh
-curl http://127.0.0.1:6420/version
+curl http://127.0.0.1:7220/version
 ```
 
 Result:
@@ -171,7 +171,7 @@ Args:
 Example:
 
 ```sh
-curl http://127.0.0.1:6420/balance\?addrs\=7cpQ7t3PZZXvjTst8G7Uvs7XH4LeM8fBPD,nu7eSpT6hr5P21uzw7bnbxm83B6ywSjHdq
+curl http://127.0.0.1:7220/balance\?addrs\=7cpQ7t3PZZXvjTst8G7Uvs7XH4LeM8fBPD,nu7eSpT6hr5P21uzw7bnbxm83B6ywSjHdq
 ```
 
 Result:
@@ -204,13 +204,13 @@ Addrs and hashes cannot be combined.
 Example:
 
 ```sh
-curl http://127.0.0.1:6420/outputs?addrs=6dkVxyKFbFKg9Vdg6HPg1UANLByYRqkrdY
+curl http://127.0.0.1:7220/outputs?addrs=6dkVxyKFbFKg9Vdg6HPg1UANLByYRqkrdY
 ```
 
 or
 
 ```sh
-curl http://127.0.0.1:6420/outputs?hashes=7669ff7350d2c70a88093431a7b30d3e69dda2319dcb048aa80fa0d19e12ebe0
+curl http://127.0.0.1:7220/outputs?hashes=7669ff7350d2c70a88093431a7b30d3e69dda2319dcb048aa80fa0d19e12ebe0
 ```
 
 Result:
@@ -248,7 +248,7 @@ Args:
 Example:
 
 ```sh
-curl http://127.0.0.1:6420/wallet?id=2017_11_25_e5fb.wlt
+curl http://127.0.0.1:7220/wallet?id=2017_11_25_e5fb.wlt
 ```
 
 Result:
@@ -292,7 +292,7 @@ Returns all pending transaction for all addresses by selected Wallet
 Example:
 
 ```sh
-curl http://127.0.0.1:6420/wallet/transactions?id=2017_11_25_e5fb.wlt
+curl http://127.0.0.1:7220/wallet/transactions?id=2017_11_25_e5fb.wlt
 ```
 
 Result:
@@ -348,7 +348,7 @@ Method: GET
 Example:
 
 ```sh
-curl http://127.0.0.1:6420/wallets
+curl http://127.0.0.1:7220/wallets
 ```
 
 Result:
@@ -390,7 +390,7 @@ Method: GET
 Example:
 
 ```sh
-curl http://127.0.0.1:6420/wallets/folderName
+curl http://127.0.0.1:7220/wallets/folderName
 ```
 
 Result:
@@ -415,7 +415,7 @@ Args:
 Example:
 
 ```sh
-curl http://127.0.0.1:6420/wallet/newSeed
+curl http://127.0.0.1:7220/wallet/newSeed
 ```
 
 Result:
@@ -442,7 +442,7 @@ Args:
 Example:
 
 ```sh
-curl -X POST http://127.0.0.1:6420/wallet/create \
+curl -X POST http://127.0.0.1:7220/wallet/create \
  -H 'Content-Type: application/x-www-form-urlencoded' \
  -d 'seed=$seed' \
  -d 'label=$label' \
@@ -487,7 +487,7 @@ Args:
 Example:
 
 ```sh
-curl -X POST http://127.0.0.1:6420/wallet/newAddress \
+curl -X POST http://127.0.0.1:7220/wallet/newAddress \
  -H 'Content-Type: x-www-form-urlencoded' \
  -d 'id=2017_05_09_d554.wlt' \
  -d 'num=2' \
@@ -517,7 +517,7 @@ Args:
 Example:
 
 ```sh
-curl -X POST http://127.0.0.1:6420/wallet/update \
+curl -X POST http://127.0.0.1:7220/wallet/update \
  -H 'Content-Type: application/x-www-form-urlencoded' \
  -d 'id=$id' \
  -d 'label=$label'
@@ -541,7 +541,7 @@ Args:
 Example:
 
 ```sh
-curl http://127.0.0.1:6420/wallet/balance?id=2017_05_09_d554.wlt
+curl http://127.0.0.1:7220/wallet/balance?id=2017_05_09_d554.wlt
 ```
 
 Result:
@@ -586,7 +586,7 @@ Statuses:
 example, send 1 coin to `2iVtHS5ye99Km5PonsB42No3pQRGEURmxyc` from wallet `2017_05_09_ea42.wlt`:
 
 ```sh
-curl -X POST  http://127.0.0.1:6420/wallet/spend \
+curl -X POST  http://127.0.0.1:7220/wallet/spend \
   -H 'Content-Type: application/x-www-form-urlencoded' \
   -d 'id=2017_05_09_ea42.wlt' \
   -d 'dst=2iVtHS5ye99Km5PonsB42No3pQRGEURmxyc' \
@@ -781,7 +781,7 @@ for spending. To control which addresses may spend, specify the addresses in thi
 Example:
 
 ```sh
-curl -X POST http://127.0.0.1:6420/wallet/transaction -H 'content-type: application/json' -d '{
+curl -X POST http://127.0.0.1:7220/wallet/transaction -H 'content-type: application/json' -d '{
     "hours_selection": {
         "type": "auto",
         "mode": "share",
@@ -863,7 +863,7 @@ Args:
 Example:
 
 ```sh
-curl -X POST http://127.0.0.1:6420/wallet/unload \
+curl -X POST http://127.0.0.1:7220/wallet/unload \
  -H 'Content-Type: x-www-form-urlencoded' \
  -d 'id=2017_05_09_d554.wlt'
 ```
@@ -881,7 +881,7 @@ Args:
 Example:
 
 ```sh
-curl -X POST http://127.0.0.1:6420/wallet/encrypt \
+curl -X POST http://127.0.0.1:7220/wallet/encrypt \
  -H 'Content-Type: application/x-www-form-urlencoded' \
  -d 'id=test.wlt' \
  -d 'password=$password'
@@ -923,7 +923,7 @@ Args:
 Example:
 
 ```sh
-curl -X POST http://127.0.0.1:6420/wallet/decrypt \
+curl -X POST http://127.0.0.1:7220/wallet/decrypt \
  -H 'Content-Type: application/x-www-form-urlencoded' \
  -d 'id=test.wlt' \
  -d 'password=$password'
@@ -967,7 +967,7 @@ Args:
 Example:
 
 ```sh
-curl http://127.0.0.1:6420/wallet/seed?id=test.wlt&password=$password
+curl http://127.0.0.1:7220/wallet/seed?id=test.wlt&password=$password
 ```
 
 Result:
@@ -990,7 +990,7 @@ Method: GET
 Example:
 
 ```sh
-curl http://127.0.0.1:6420/pendingTxs
+curl http://127.0.0.1:7220/pendingTxs
 ```
 
 Result:
@@ -1046,7 +1046,7 @@ Args:
 Example:
 
 ```sh
-curl http://127.0.0.1:6420/transaction?txid=a6446654829a4a844add9f181949d12f8291fdd2c0fcb22200361e90e814e2d3
+curl http://127.0.0.1:7220/transaction?txid=a6446654829a4a844add9f181949d12f8291fdd2c0fcb22200361e90e814e2d3
 ```
 
 Result:
@@ -1094,7 +1094,7 @@ Method: GET
 Example:
 
 ```sh
-curl http://127.0.0.1:6420/rawtx?txid=a6446654829a4a844add9f181949d12f8291fdd2c0fcb22200361e90e814e2d3
+curl http://127.0.0.1:7220/rawtx?txid=a6446654829a4a844add9f181949d12f8291fdd2c0fcb22200361e90e814e2d3
 ```
 
 Result:
@@ -1146,18 +1146,18 @@ Args:
 To get address related confirmed transactions:
 
 ```sh
-curl http://127.0.0.1:6420/transactions?addrs=7cpQ7t3PZZXvjTst8G7Uvs7XH4LeM8fBPD,6dkVxyKFbFKg9Vdg6HPg1UANLByYRqkrdY&confirmed=1
+curl http://127.0.0.1:7220/transactions?addrs=7cpQ7t3PZZXvjTst8G7Uvs7XH4LeM8fBPD,6dkVxyKFbFKg9Vdg6HPg1UANLByYRqkrdY&confirmed=1
 ```
 
 To get address related unconfirmed transactions:
 ```sh
-curl http://127.0.0.1:6420/transactions?addrs=7cpQ7t3PZZXvjTst8G7Uvs7XH4LeM8fBPD,6dkVxyKFbFKg9Vdg6HPg1UANLByYRqkrdY&confirmed=0
+curl http://127.0.0.1:7220/transactions?addrs=7cpQ7t3PZZXvjTst8G7Uvs7XH4LeM8fBPD,6dkVxyKFbFKg9Vdg6HPg1UANLByYRqkrdY&confirmed=0
 ```
 
 To get all addresses related transactions:
 
 ```sh
-curl http://127.0.0.1:6420/transactions?addrs=7cpQ7t3PZZXvjTst8G7Uvs7XH4LeM8fBPD,6dkVxyKFbFKg9Vdg6HPg1UANLByYRqkrdY
+curl http://127.0.0.1:7220/transactions?addrs=7cpQ7t3PZZXvjTst8G7Uvs7XH4LeM8fBPD,6dkVxyKFbFKg9Vdg6HPg1UANLByYRqkrdY
 ```
 
 
@@ -1285,7 +1285,7 @@ Method: GET
 Example:
 
 ```sh
-curl http://127.0.0.1:6420/resendUnconfirmedTxns
+curl http://127.0.0.1:7220/resendUnconfirmedTxns
 ```
 
 Result:
@@ -1311,7 +1311,7 @@ Method: GET
 Example:
 
 ```sh
-curl http://127.0.0.1:6420/blockchain/metadata
+curl http://127.0.0.1:7220/blockchain/metadata
 ```
 
 Result:
@@ -1342,7 +1342,7 @@ Method: GET
 Example:
 
 ```sh
-curl http://127.0.0.1:6420/blockchain/progress
+curl http://127.0.0.1:7220/blockchain/progress
 ```
 
 Result:
@@ -1375,13 +1375,13 @@ Args:
 ```
 
 ```sh
-curl http://127.0.0.1:6420/block?hash=6eafd13ab6823223b714246b32c984b56e0043412950faf17defdbb2cbf3fe30
+curl http://127.0.0.1:7220/block?hash=6eafd13ab6823223b714246b32c984b56e0043412950faf17defdbb2cbf3fe30
 ```
 
 or
 
 ```sh
-curl http://127.0.0.1:6420/block?seq=2760
+curl http://127.0.0.1:7220/block?seq=2760
 ```
 
 Result:
@@ -1444,7 +1444,7 @@ Args:
 Example:
 
 ```sh
-curl http://127.0.0.1:6420/blocks?start=1&end=2
+curl http://127.0.0.1:7220/blocks?start=1&end=2
 ```
 
 Result:
@@ -1540,7 +1540,7 @@ Args:
 Example:
 
 ```sh
-curl http://127.0.0.1:6420/last_blocks?num=2
+curl http://127.0.0.1:7220/last_blocks?num=2
 ```
 
 Result:
@@ -1650,7 +1650,7 @@ Args:
 Example:
 
 ```sh
-curl http://127.0.0.1:6420/explorer/address?address=2NfNKsaGJEndpSajJ6TsKJfsdDjW2gFsjXg
+curl http://127.0.0.1:7220/explorer/address?address=2NfNKsaGJEndpSajJ6TsKJfsdDjW2gFsjXg
 ```
 
 Result:
@@ -1707,7 +1707,7 @@ Args:
 Example:
 
 ```sh
-curl http://127.0.0.1:6420/uxout?uxid=8b64d9b058e10472b9457fd2d05a1d89cbbbd78ce1d97b16587d43379271bed1
+curl http://127.0.0.1:7220/uxout?uxid=8b64d9b058e10472b9457fd2d05a1d89cbbbd78ce1d97b16587d43379271bed1
 ```
 
 Result:
@@ -1738,7 +1738,7 @@ Args:
 Example:
 
 ```sh
-curl http://127.0.0.1:6420/address_uxouts?address=6dkVxyKFbFKg9Vdg6HPg1UANLByYRqkrdY
+curl http://127.0.0.1:7220/address_uxouts?address=6dkVxyKFbFKg9Vdg6HPg1UANLByYRqkrdY
 ```
 
 Result:
@@ -1771,7 +1771,7 @@ Method: GET
 Example:
 
 ```sh
-curl http://127.0.0.1:6420/coinSupply
+curl http://127.0.0.1:7220/coinSupply
 ```
 
 Result:
@@ -1903,7 +1903,7 @@ Args:
 Example:
 
 ```sh
-curl "http://127.0.0.1:6420/richlist?n=4&include-distribution=true"
+curl "http://127.0.0.1:7220/richlist?n=4&include-distribution=true"
 ```
 
 Result:
@@ -1945,7 +1945,7 @@ Method: GET
 Example:
 
 ```sh
-curl "http://127.0.0.1:6420/addresscount"
+curl "http://127.0.0.1:7220/addresscount"
 ```
 
 Result:
@@ -1998,7 +1998,7 @@ Method: GET
 Example:
 
 ```sh
-curl 'http://127.0.0.1:6420/network/connections'
+curl 'http://127.0.0.1:7220/network/connections'
 ```
 
 Result:
@@ -2051,7 +2051,7 @@ Method: GET
 Example:
 
 ```sh
-curl 'http://127.0.0.1:6420/network/defaultConnections'
+curl 'http://127.0.0.1:7220/network/defaultConnections'
 ```
 
 Result:
@@ -2079,7 +2079,7 @@ Method: GET
 Example:
 
 ```sh
-curl 'http://127.0.0.1:6420/network/connections/trust'
+curl 'http://127.0.0.1:7220/network/connections/trust'
 ```
 
 Result:
