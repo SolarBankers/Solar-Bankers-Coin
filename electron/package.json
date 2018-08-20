@@ -1,13 +1,13 @@
 {
     "name": "solarbankerscoin",
     "productName": "SolarBankers Coin",
-    "author": "SolarBankers",
+    "author": "Solarbankers Coin",
     "main": "src/electron-main.js",
-    "version": "0.23.1-rc2",
+    "version": "0.24.1",
     "description": "solarbankerscoin wallet",
     "license": "MIT",
     "build": {
-        "appId": "org.solarbankers.solarbankers",
+        "appId": "org.solarbankerscoin.solarbankerscoin",
         "nsis": {
             "oneClick": false,
             "allowToChangeInstallationDirectory": true
@@ -27,10 +27,6 @@
                 {
                     "from": ".gox_output/${os}_${arch}",
                     "to": "./resources/app"
-                },
-                {
-                    "from": "data.db",
-                    "to": "./"
                 }
             ]
         },
@@ -74,13 +70,12 @@
         "dist-win": "build -w --x64 --ia32 -p=never",
         "dist-linux": "build -l --x64 -p=never",
         "dist-mac": "build -m --x64 -p=never",
-        "pack-mac": "build --dir -m -p=never"
+        "pack-mac": "build --dir -m -p=never",
+        "postinstall": "electron-builder install-app-deps"
     },
     "devDependencies": {
-        "electron": "^1.8.0",
-        "electron-builder": "^19.55.0"
+        "electron": "2.0.0",
+        "electron-builder": "20.13.3"
     },
-    "dependencies": {
-        "electron-log": "^2.2.9"
-    }
+    "dependencies": {}
 }

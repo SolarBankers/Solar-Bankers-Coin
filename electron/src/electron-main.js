@@ -2,8 +2,6 @@
 
 const { app, Menu, BrowserWindow, dialog, shell, session } = require('electron');
 
-var log = require('electron-log');
-
 const path = require('path');
 
 const childProcess = require('child_process');
@@ -21,7 +19,6 @@ require('electron-context-menu')({});
 
 global.eval = function() { throw new Error('bad!!'); }
 
-const defaultURL = 'http://127.0.0.1:7220/';
 let currentURL;
 
 // Force everything localhost, in case of a leak
@@ -39,10 +36,10 @@ let win;
 var skycoin = null;
 
 function startSkycoin() {
-  console.log('Starting SolarBankerCoin from electron');
+  console.log('Starting distributedblocks from electron');
 
   if (skycoin) {
-    console.log('SolarBankerCoin already running');
+    console.log('solarbankerscoinalready running');
     app.emit('skycoin-ready');
     return
   }
@@ -77,12 +74,17 @@ function startSkycoin() {
     '-enable-seed-api=true',
     '-enable-wallet-api=true',
     '-rpc-interface=false',
-    "-disable-csrf=false"
+    '-disable-csrf=false',
+    '-reset-corrupt-db=true',
+    '-enable-gui=true',
+    '-web-interface-port=0' // random port assignment
     // will break
     // broken (automatically generated certs do not work):
     // '-web-interface-https=true',
   ]
   skycoin = childProcess.spawn(exe, args);
+
+  createWindow();
 
   skycoin.on('error', (e) => {
     dialog.showErrorBox('Failed to start solarbankerscoin', e.toString());
@@ -95,13 +97,15 @@ function startSkycoin() {
     if (currentURL) {
       return
     }
+
     const marker = 'Starting web interface on ';
-    var i = data.indexOf(marker);
-    if (i === -1) {
-      return
-    }
-    currentURL = defaultURL;
-    app.emit('skycoin-ready', { url: currentURL });
+
+    data.toString().split("\n").forEach(line => {
+      if (line.indexOf(marker) !== -1) {
+        currentURL = 'http://' + line.split(marker)[1].trim();
+        app.emit('skycoin-ready', { url: currentURL });
+      }
+    });
   });
 
   skycoin.stderr.on('data', (data) => {
@@ -109,23 +113,19 @@ function startSkycoin() {
   });
 
   skycoin.on('close', (code) => {
-    // log.info('Skycoin closed');
-    console.log('SolarBankerscoin closed');
+    // log.info('solarbankerscoinclosed');
+    console.log('solarbankerscoinclosed');
     reset();
   });
 
   skycoin.on('exit', (code) => {
-    // log.info('Skycoin exited');
-    console.log('SolarBankerscoin exited');
+    // log.info(solarbankerscoinexited');
+    console.log('solarbankerscoinexited');
     reset();
   });
 }
 
 function createWindow(url) {
-  if (!url) {
-    url = defaultURL;
-  }
-
   // To fix appImage doesn't show icon in dock issue.
   var appPath = app.getPath('exe');
   var iconPath = (() => {
@@ -139,13 +139,19 @@ function createWindow(url) {
   win = new BrowserWindow({
     width: 1200,
     height: 900,
-    title: 'Skycoin',
+    title: 'SolarBankersCoin',
     icon: iconPath,
     nodeIntegration: false,
     webPreferences: {
       webgl: false,
       webaudio: false,
       contextIsolation: true,
+      webviewTag: false,
+      nodeIntegration: false,
+      nodeIntegrationInWorker: false,
+      allowRunningInsecureContent: false,
+      webSecurity: true,
+      plugins: false,
     },
   });
 
@@ -155,14 +161,18 @@ function createWindow(url) {
 
   const ses = win.webContents.session
   ses.clearCache(function () {
-    console.log('Cleared the caching of the SolarBankerscoin wallet.');
+    console.log('Cleared the caching of the solarbankerscoin wallet.');
   });
 
   ses.clearStorageData([], function() {
     console.log('Cleared the stored cached data');
   });
 
-  win.loadURL(url);
+  if (url) {
+    win.loadURL(url);
+  } else {
+    win.loadURL('file://' + __dirname + '/splash/index.html');
+  }
 
   // Open the DevTools.
   // win.webContents.openDevTools();
@@ -238,7 +248,7 @@ const alreadyRunning = app.makeSingleInstance((commandLine, workingDirectory) =>
     }
     win.focus();
   } else {
-    createWindow(currentURL || defaultURL);
+    createWindow(currentURL);
   }
 });
 
@@ -255,10 +265,14 @@ let walletsFolder = null;
 app.on('ready', startSkycoin);
 
 app.on('skycoin-ready', (e) => {
-  createWindow(e.url);
+  if (win) {
+    win.loadURL(e.url);
+  } else {
+    createWindow(e.url);
+  }
 
   axios
-    .get(defaultURL + 'wallets/folderName')
+    .get(e.url + '/api/v1/wallets/folderName')
     .then(response => walletsFolder = response.data.address)
     .catch(() => {});
 });
@@ -276,7 +290,7 @@ app.on('activate', () => {
   // On OS X it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   if (win === null) {
-    createWindow();
+    createWindow(currentURL);
   }
 });
 

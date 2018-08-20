@@ -6,8 +6,8 @@
 }
 
 .large-header {
-  background: url('../../../../assets/img/header.png') center center no-repeat; /* For Safari 5.1 to 6.0 */
- background-size: 100% auto;
+   background: url('../../../../assets/img/header.png') center center no-repeat; /* For Safari 5.1 to 6.0 */
+   background-size: 100% auto;
   display: flex;
   flex-flow: column;
   align-items: stretch;
@@ -16,7 +16,7 @@
 
 .balance-container {
   align-items: center;
-  color: #9e6924;
+  color: $white;
   display: flex;
   flex: 1 1 auto;
   font-size: 12px;
@@ -27,7 +27,7 @@
     .coins {
       line-height: 1;
       margin: 0 0 0.5em;
-       color: #9e6924;
+
       span {
         font-size: 4em;
       }
@@ -55,14 +55,15 @@
 }
 
 .notification-bar {
-  background-color: #845415;
-  color:#9e6924;
-  div {
-    margin:auto;
+  background-color: #F44A4D;
+  color:#FBFBFB;
 
-    a{
-      text-decoration:none;
-      color:#9e6924;
+  div {
+    margin: auto;
+
+    a {
+      text-decoration: none;
+      color: #FFEBEE;
     }
   }
 }
